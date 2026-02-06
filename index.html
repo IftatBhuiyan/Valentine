@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For You</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Quicksand:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --pink: #ff6b9d;
+            --deep-pink: #c44569;
+            --blush: #f8a5c2;
+            --soft-pink: #fce4ec;
+            --rose: #e91e63;
+            --gold: #f9ca24;
+            --cream: #fff5f5;
+            --dark: #2d132c;
+            --white: #ffffff;
+        }
+
+        html, body {
+            width: 100%; height: 100%;
+            overflow: hidden;
+            font-family: 'Quicksand', sans-serif;
+            background: #0a0a0a;
+            cursor: default;
+        }
+
+        /* ====== CANVAS FOR PARTICLES ====== */
+        #particleCanvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        /* ====== SCENES ====== */
+        .scene {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 1s ease, visibility 1s ease;
+            z-index: 5;
+        }
+
+        .scene.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* ====== SCENE 0: INTRO / ENVELOPE ====== */
+        #scene0 {
+            background: radial-gradient(ellipse at center, #1a0a1e 0%, #0a0a0a 70%);
+        }
+
+        .envelope-wrapper {
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.5s ease;
+        }
+
+        .envelope-wrapper:hover { transform: scale(1.05); }
+
+        .envelope {
+            width: 220px;
+            height: 150px;
+            background: linear-gradient(145deg, #f8a5c2, #ff6b9d);
+            border-radius: 8px;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(255, 107, 157, 0.3), 0 0 100px rgba(255, 107, 157, 0.1);
+            transition: all 0.6s ease;
+        }
+
+        .envelope-flap {
+            position: absolute;
+            top: 0; left: 0;
+            width: 0; height: 0;
+            border-left: 110px solid transparent;
+            border-right: 110px solid transparent;
+            border-top: 80px solid #e8809e;
+            transform-origin: top center;
+            transition: transform 0.8s ease;
+            z-index: 2;
+        }
+
+        .envelope-wrapper:hover .envelope-flap {
+            transform: rotateX(180deg);
+        }
+
+        .envelope-heart {
+            position: absolute;
+            top: 53%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            z-index: 3;
+            animation: heartPulse 1.5s ease-in-out infinite;
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+        }
+
+        .envelope-to {
+            position: absolute;
+            bottom: 12%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.85);
+            z-index: 3;
+            white-space: nowrap;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+            letter-spacing: 1px;
+        }
+
+        @keyframes heartPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.15); }
+        }
+
+        .envelope-label {
+            margin-top: 2rem;
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.5rem;
+            color: rgba(248, 165, 194, 0.7);
+            letter-spacing: 2px;
+            animation: softPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes softPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* Floating particles around envelope */
+        .sparkle-dot {
+            position: absolute;
+            width: 3px; height: 3px;
+            background: var(--blush);
+            border-radius: 50%;
+            animation: orbit var(--duration) linear infinite;
+            opacity: 0.6;
+        }
+
+        @keyframes orbit {
+            0% { transform: rotate(0deg) translateX(var(--radius)) rotate(0deg); opacity: 0.2; }
+            50% { opacity: 0.8; }
+            100% { transform: rotate(360deg) translateX(var(--radius)) rotate(-360deg); opacity: 0.2; }
+        }
+
+        /* ====== SCENE 1: HEY YOU ====== */
+        #scene1 {
+            background: radial-gradient(ellipse at center, #1a0a1e 0%, #0a0a0a 70%);
+        }
+
+        .greeting-text {
+            font-family: 'Dancing Script', cursive;
+            font-size: 5rem;
+            color: transparent;
+            background: linear-gradient(135deg, #ff6b9d, #f8a5c2, #ff6b9d, #f9ca24);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: gradientShift 4s ease infinite;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        .greeting-text.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .continue-hint {
+            position: absolute;
+            bottom: 3rem;
+            color: rgba(248, 165, 194, 0.5);
+            font-size: 0.85rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            animation: softPulse 3s ease-in-out infinite;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .continue-hint:hover { color: rgba(248, 165, 194, 0.9); }
+
+        /* ====== SCENE 2: LOVE LETTER ====== */
+        #scene2 {
+            background: radial-gradient(ellipse at 30% 50%, #1e0a22 0%, #0a0a0a 70%);
+        }
+
+        .letter-card {
+            max-width: 580px;
+            width: 90%;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(248, 165, 194, 0.15);
+            border-radius: 20px;
+            padding: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .letter-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 200%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--pink), var(--gold), var(--pink), transparent);
+            animation: shimmerLine 3s linear infinite;
+        }
+
+        @keyframes shimmerLine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .letter-card .letter-title {
+            font-family: 'Dancing Script', cursive;
+            font-size: 2rem;
+            color: var(--blush);
+            text-align: center;
+            margin-bottom: 2rem;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+
+        .letter-card .letter-line {
+            font-size: 1.05rem;
+            line-height: 2;
+            color: rgba(255, 255, 255, 0.65);
+            text-align: center;
+            font-weight: 300;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: all 0.8s ease;
+        }
+
+        .letter-card .letter-line.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .letter-card .letter-line .highlight {
+            color: var(--pink);
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.4rem;
+            font-weight: 500;
+        }
+
+        .letter-card .letter-sig {
+            text-align: right;
+            margin-top: 1.5rem;
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.5rem;
+            color: var(--blush);
+            opacity: 0;
+            transition: opacity 0.8s ease 0.5s;
+        }
+
+        /* ====== SCENE 3: FLOWER GARDEN ====== */
+        #scene3 {
+            background: radial-gradient(ellipse at 50% 80%, #0a1a0a 0%, #0a0a0a 60%);
+        }
+
+        .garden-label {
+            position: absolute;
+            top: 8%;
+            font-family: 'Dancing Script', cursive;
+            font-size: 2.5rem;
+            color: var(--blush);
+            opacity: 0;
+            transition: opacity 1s ease;
+            text-align: center;
+        }
+
+        .garden-sublabel {
+            position: absolute;
+            top: 15%;
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 300;
+            opacity: 0;
+            transition: opacity 1s ease 0.5s;
+            text-align: center;
+        }
+
+        #gardenCanvas {
+            position: absolute;
+            bottom: 0; left: 0;
+            width: 100%; height: 70%;
+            z-index: 2;
+        }
+
+        .garden-instruction {
+            position: absolute;
+            bottom: 5%;
+            font-size: 0.85rem;
+            color: rgba(248, 165, 194, 0.4);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            z-index: 10;
+            animation: softPulse 3s ease-in-out infinite;
+            cursor: pointer;
+        }
+
+        /* ====== SCENE 4: THE QUESTION ====== */
+        #scene4 {
+            background: radial-gradient(ellipse at center, #1e0a22 0%, #0a0a0a 70%);
+        }
+
+        .question-container {
+            text-align: center;
+            z-index: 10;
+        }
+
+        .question-heart-big {
+            font-size: 5rem;
+            display: inline-block;
+            animation: heartPulse 1.5s ease-in-out infinite;
+            filter: drop-shadow(0 0 30px rgba(233, 30, 99, 0.4));
+            margin-bottom: 1rem;
+        }
+
+        .question-main {
+            font-family: 'Dancing Script', cursive;
+            font-size: 4rem;
+            color: transparent;
+            background: linear-gradient(135deg, var(--pink), var(--blush), var(--rose));
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: gradientShift 4s ease infinite;
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .question-main.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .question-plea {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 3rem;
+            opacity: 0;
+            transition: opacity 1s ease 0.5s;
+        }
+
+        .question-plea.show { opacity: 1; }
+
+        .btn-row {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 1s ease 0.8s;
+        }
+
+        .btn-row.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .btn-valentine {
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 600;
+            font-size: 1.15rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-valentine::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .btn-valentine:hover::after { opacity: 1; }
+
+        .btn-yes-v {
+            padding: 1.1rem 3.5rem;
+            background: linear-gradient(135deg, var(--pink), var(--rose));
+            color: white;
+            box-shadow: 0 8px 40px rgba(233, 30, 99, 0.35),
+                        0 0 80px rgba(233, 30, 99, 0.1);
+        }
+
+        .btn-yes-v:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 14px 50px rgba(233, 30, 99, 0.45),
+                        0 0 100px rgba(233, 30, 99, 0.15);
+        }
+
+        .btn-no-v {
+            padding: 1.1rem 2.5rem;
+            background: transparent;
+            color: rgba(248, 165, 194, 0.5);
+            border: 1px solid rgba(248, 165, 194, 0.2);
+        }
+
+        .btn-no-v:hover {
+            border-color: rgba(248, 165, 194, 0.4);
+            color: rgba(248, 165, 194, 0.8);
+        }
+
+        /* ====== SCENE 5: CELEBRATION / TOO BAD ====== */
+        #scene5 {
+            background: radial-gradient(ellipse at center, #1e0a22 0%, #0a0a0a 70%);
+        }
+
+        .finale-text {
+            font-family: 'Dancing Script', cursive;
+            font-size: 4.5rem;
+            text-align: center;
+            color: transparent;
+            background: linear-gradient(135deg, #ff6b9d, #f8a5c2, #f9ca24, #ff6b9d);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: gradientShift 3s ease infinite;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: all 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            line-height: 1.3;
+        }
+
+        .finale-text.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .finale-sub {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 1rem;
+            font-weight: 300;
+            opacity: 0;
+            transition: opacity 1s ease 0.8s;
+        }
+
+        .finale-sub.show { opacity: 1; }
+
+        .finale-hearts {
+            margin-top: 2rem;
+            font-size: 3rem;
+            opacity: 0;
+            transition: opacity 1s ease 1.2s;
+            animation: heartPulse 1.5s ease-in-out infinite;
+        }
+
+        .finale-hearts.show { opacity: 1; }
+
+        /* ====== CONFETTI ====== */
+        .confetti {
+            position: fixed;
+            top: -20px;
+            width: 10px;
+            height: 18px;
+            z-index: 100;
+            opacity: 0;
+            animation: confettiFall linear forwards;
+            pointer-events: none;
+        }
+
+        @keyframes confettiFall {
+            0% { opacity: 1; transform: translateY(0) rotateZ(0deg) rotateY(0deg); }
+            100% { opacity: 0; transform: translateY(100vh) rotateZ(720deg) rotateY(360deg); }
+        }
+
+        /* ====== RING GLOW BEHIND SCENES ====== */
+        .ring-glow {
+            position: fixed;
+            top: 50%; left: 50%;
+            width: 400px; height: 400px;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 107, 157, 0.08) 0%, transparent 70%);
+            z-index: 2;
+            pointer-events: none;
+            animation: ringPulse 4s ease-in-out infinite;
+        }
+
+        @keyframes ringPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+            50% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+        }
+
+        /* ====== MOUSE TRAIL ====== */
+        .trail-dot {
+            position: fixed;
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 60;
+            background: var(--pink);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        /* ====== RESPONSIVE ====== */
+        @media (max-width: 768px) {
+            .greeting-text { font-size: 3.2rem; }
+            .question-main { font-size: 2.8rem; }
+            .finale-text { font-size: 3rem; }
+            .letter-card { padding: 2rem 1.5rem; }
+            .letter-card .letter-line { font-size: 0.95rem; }
+            .envelope { width: 180px; height: 120px; }
+            .envelope-flap {
+                border-left-width: 90px;
+                border-right-width: 90px;
+                border-top-width: 65px;
+            }
+            .garden-label { font-size: 1.8rem; }
+            .btn-row { flex-direction: column; align-items: center; gap: 1rem; }
+        }
+
+        @media (max-width: 480px) {
+            .greeting-text { font-size: 2.5rem; }
+            .question-main { font-size: 2.2rem; }
+            .finale-text { font-size: 2.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Particle canvas for cherry blossoms & ambient effects -->
+    <canvas id="particleCanvas"></canvas>
+
+    <!-- Ambient glow -->
+    <div class="ring-glow"></div>
+
+    <!-- ===== SCENE 0: ENVELOPE INTRO ===== -->
+    <div class="scene active" id="scene0">
+        <div class="envelope-wrapper" id="envelopeBtn">
+            <div class="envelope">
+                <div class="envelope-flap"></div>
+                <div class="envelope-heart">❤️</div>
+                <div class="envelope-to">To Shanjeda</div>
+            </div>
+            <!-- Orbiting sparkles -->
+            <div class="sparkle-dot" style="--radius: 140px; --duration: 6s; top: 50%; left: 50%;"></div>
+            <div class="sparkle-dot" style="--radius: 160px; --duration: 8s; top: 50%; left: 50%; animation-delay: -2s;"></div>
+            <div class="sparkle-dot" style="--radius: 130px; --duration: 7s; top: 50%; left: 50%; animation-delay: -4s;"></div>
+            <div class="sparkle-dot" style="--radius: 170px; --duration: 9s; top: 50%; left: 50%; animation-delay: -1s;"></div>
+            <div class="sparkle-dot" style="--radius: 150px; --duration: 5s; top: 50%; left: 50%; animation-delay: -3s;"></div>
+        </div>
+        <div class="envelope-label">tap to open</div>
+    </div>
+
+    <!-- ===== SCENE 1: GREETING ===== -->
+    <div class="scene" id="scene1">
+        <div class="greeting-text" id="greetingText"></div>
+        <div class="continue-hint" id="continueHint1">click anywhere to continue</div>
+    </div>
+
+    <!-- ===== SCENE 2: LOVE LETTER ===== -->
+    <div class="scene" id="scene2">
+        <div class="letter-card" id="letterCard">
+            <div class="letter-title" id="letterTitle">A Little Love Note</div>
+            <div class="letter-line" id="line1">Every moment with you feels like a dream<br>I never want to wake up from.</div>
+            <div class="letter-line" id="line2" style="margin-top: 1rem;">You are my <span class="highlight">sunshine on cloudy days</span>,<br>my comfort in the chaos.</div>
+            <div class="letter-line" id="line3" style="margin-top: 1rem;">I fall for you a little more<br>every single day.</div>
+            <div class="letter-line" id="line4" style="margin-top: 1rem;"><span class="highlight">I'm so lucky to have you.</span></div>
+            <div class="letter-sig" id="letterSig">Forever Yours &hearts;</div>
+        </div>
+        <div class="continue-hint" id="continueHint2">click to continue</div>
+    </div>
+
+    <!-- ===== SCENE 3: FLOWER GARDEN ===== -->
+    <div class="scene" id="scene3">
+        <div class="garden-label" id="gardenLabel">A Garden That Grows For You</div>
+        <div class="garden-sublabel" id="gardenSublabel">Click anywhere to plant flowers</div>
+        <canvas id="gardenCanvas"></canvas>
+        <div class="garden-instruction" id="gardenNext">click here when you're ready</div>
+    </div>
+
+    <!-- ===== SCENE 4: THE QUESTION ===== -->
+    <div class="scene" id="scene4">
+        <div class="question-container">
+            <div class="question-heart-big">💘</div>
+            <div class="question-main" id="questionMain">Will You Be<br>My Valentine?</div>
+            <div class="question-plea" id="questionPlea">I really need to know...</div>
+            <div class="btn-row" id="btnRow">
+                <button class="btn-valentine btn-yes-v" id="btnYes">Yes!</button>
+                <button class="btn-valentine btn-no-v" id="btnNo">No</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== SCENE 5: FINALE ===== -->
+    <div class="scene" id="scene5">
+        <div class="finale-text" id="finaleText"></div>
+        <div class="finale-sub" id="finaleSub"></div>
+        <div class="finale-hearts" id="finaleHearts">💖 💕 💗 💝 💘</div>
+    </div>
+
+    <script>
+    // ============================================================
+    //  PARTICLE SYSTEM (Cherry Blossoms + Ambient)
+    // ============================================================
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let mouseX = 0, mouseY = 0;
+    let petalsEnabled = true;
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class Petal {
+        constructor() {
+            this.reset();
+        }
+        reset() {
+            this.x = Math.random() * canvas.width;
+            this.y = -20;
+            this.size = 4 + Math.random() * 8;
+            this.speedY = 0.3 + Math.random() * 1;
+            this.speedX = -0.5 + Math.random() * 1;
+            this.rotation = Math.random() * Math.PI * 2;
+            this.rotSpeed = (Math.random() - 0.5) * 0.03;
+            this.opacity = 0.2 + Math.random() * 0.5;
+            this.color = [
+                'rgba(255,182,193,', 'rgba(255,192,203,',
+                'rgba(255,105,180,', 'rgba(255,183,197,',
+                'rgba(248,165,194,', 'rgba(255,209,220,'
+            ][Math.floor(Math.random() * 6)];
+            this.wobbleAmp = 20 + Math.random() * 40;
+            this.wobbleSpeed = 0.01 + Math.random() * 0.02;
+            this.wobbleOffset = Math.random() * Math.PI * 2;
+            this.life = 0;
+        }
+        update() {
+            this.life++;
+            this.y += this.speedY;
+            this.x += this.speedX + Math.sin(this.life * this.wobbleSpeed + this.wobbleOffset) * 0.5;
+            this.rotation += this.rotSpeed;
+            if (this.y > canvas.height + 20) this.reset();
+        }
+        draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.rotation);
+            ctx.fillStyle = this.color + this.opacity + ')';
+            ctx.beginPath();
+            // Petal shape
+            ctx.moveTo(0, 0);
+            ctx.bezierCurveTo(this.size / 2, -this.size, this.size, -this.size / 2, 0, this.size);
+            ctx.bezierCurveTo(-this.size, -this.size / 2, -this.size / 2, -this.size, 0, 0);
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    // Ambient sparkle
+    class Sparkle {
+        constructor(x, y) {
+            this.x = x || Math.random() * canvas.width;
+            this.y = y || Math.random() * canvas.height;
+            this.size = 1 + Math.random() * 2;
+            this.life = 0;
+            this.maxLife = 60 + Math.random() * 60;
+            this.color = Math.random() > 0.5 ? '255,107,157' : '249,202,36';
+        }
+        update() {
+            this.life++;
+            this.y -= 0.2;
+        }
+        draw() {
+            const progress = this.life / this.maxLife;
+            const alpha = progress < 0.5 ? progress * 2 : (1 - progress) * 2;
+            ctx.fillStyle = `rgba(${this.color},${alpha * 0.6})`;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        isDead() { return this.life >= this.maxLife; }
+    }
+
+    // Init petals
+    for (let i = 0; i < 35; i++) {
+        const p = new Petal();
+        p.y = Math.random() * canvas.height;
+        particles.push(p);
+    }
+
+    let sparkles = [];
+
+    function animateParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (petalsEnabled) {
+            particles.forEach(p => { p.update(); p.draw(); });
+        }
+
+        // Random ambient sparkles
+        if (Math.random() < 0.15) {
+            sparkles.push(new Sparkle());
+        }
+
+        sparkles.forEach(s => { s.update(); s.draw(); });
+        sparkles = sparkles.filter(s => !s.isDead());
+
+        requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+
+    // ============================================================
+    //  MOUSE TRAIL
+    // ============================================================
+    const trailDots = [];
+    const TRAIL_LENGTH = 12;
+    for (let i = 0; i < TRAIL_LENGTH; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'trail-dot';
+        dot.style.width = dot.style.height = (6 - i * 0.4) + 'px';
+        document.body.appendChild(dot);
+        trailDots.push({ el: dot, x: 0, y: 0 });
+    }
+
+    document.addEventListener('mousemove', e => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+    });
+
+    function animateTrail() {
+        let prevX = mouseX, prevY = mouseY;
+        trailDots.forEach((dot, i) => {
+            const speed = 0.25 - i * 0.015;
+            dot.x += (prevX - dot.x) * speed;
+            dot.y += (prevY - dot.y) * speed;
+            dot.el.style.left = dot.x + 'px';
+            dot.el.style.top = dot.y + 'px';
+            dot.el.style.opacity = (1 - i / TRAIL_LENGTH) * 0.5;
+            prevX = dot.x;
+            prevY = dot.y;
+        });
+        requestAnimationFrame(animateTrail);
+    }
+    animateTrail();
+
+    // ============================================================
+    //  SCENE MANAGEMENT
+    // ============================================================
+    let currentScene = 0;
+    const scenes = [
+        document.getElementById('scene0'),
+        document.getElementById('scene1'),
+        document.getElementById('scene2'),
+        document.getElementById('scene3'),
+        document.getElementById('scene4'),
+        document.getElementById('scene5')
+    ];
+
+    function goToScene(n) {
+        scenes[currentScene].classList.remove('active');
+        currentScene = n;
+        scenes[currentScene].classList.add('active');
+        onSceneEnter(n);
+    }
+
+    // ============================================================
+    //  SCENE 0: ENVELOPE
+    // ============================================================
+    document.getElementById('envelopeBtn').addEventListener('click', () => {
+        goToScene(1);
+    });
+
+    // ============================================================
+    //  SCENE 1: GREETING
+    // ============================================================
+    const greetingLines = ["Hey\nBeautiful...", "I made something\njust for you"];
+    let greetingIndex = 0;
+
+    function onSceneEnter(n) {
+        if (n === 1) {
+            showGreeting();
+        }
+        if (n === 2) {
+            revealLetter();
+        }
+        if (n === 3) {
+            initGarden();
+        }
+        if (n === 4) {
+            revealQuestion();
+        }
+        if (n === 5) {
+            revealFinale();
+        }
+    }
+
+    function showGreeting() {
+        const el = document.getElementById('greetingText');
+        const hint = document.getElementById('continueHint1');
+
+        function showLine(idx) {
+            if (idx >= greetingLines.length) {
+                hint.style.opacity = '1';
+                return;
+            }
+            el.innerHTML = greetingLines[idx].replace(/\n/g, '<br>');
+            el.classList.remove('show');
+            void el.offsetWidth; // Reflow
+            setTimeout(() => el.classList.add('show'), 50);
+        }
+
+        showLine(0);
+        let clickCount = 0;
+
+        const handler = () => {
+            clickCount++;
+            if (clickCount === 1) {
+                showLine(1);
+            } else if (clickCount >= 2) {
+                document.getElementById('scene1').removeEventListener('click', handler);
+                goToScene(2);
+            }
+        };
+
+        setTimeout(() => {
+            document.getElementById('scene1').addEventListener('click', handler);
+        }, 800);
+    }
+
+    // ============================================================
+    //  SCENE 2: LOVE LETTER
+    // ============================================================
+    function revealLetter() {
+        const title = document.getElementById('letterTitle');
+        const lines = [
+            document.getElementById('line1'),
+            document.getElementById('line2'),
+            document.getElementById('line3'),
+            document.getElementById('line4')
+        ];
+        const sig = document.getElementById('letterSig');
+        const hint = document.getElementById('continueHint2');
+
+        setTimeout(() => { title.style.opacity = '1'; }, 300);
+
+        lines.forEach((line, i) => {
+            setTimeout(() => {
+                line.classList.add('visible');
+            }, 800 + i * 700);
+        });
+
+        setTimeout(() => {
+            sig.style.opacity = '1';
+        }, 800 + lines.length * 700 + 300);
+
+        setTimeout(() => {
+            hint.style.opacity = '1';
+        }, 800 + lines.length * 700 + 800);
+
+        const handler = () => {
+            if (sig.style.opacity === '1') {
+                document.getElementById('scene2').removeEventListener('click', handler);
+                goToScene(3);
+            }
+        };
+        document.getElementById('scene2').addEventListener('click', handler);
+    }
+
+    // ============================================================
+    //  SCENE 3: INTERACTIVE FLOWER GARDEN
+    // ============================================================
+    const gardenCanvas = document.getElementById('gardenCanvas');
+    const gctx = gardenCanvas.getContext('2d');
+    let flowers = [];
+    let gardenActive = false;
+    let gardenAnimId = null;
+
+    function initGarden() {
+        gardenCanvas.width = window.innerWidth;
+        gardenCanvas.height = window.innerHeight * 0.7;
+
+        document.getElementById('gardenLabel').style.opacity = '1';
+        document.getElementById('gardenSublabel').style.opacity = '1';
+
+        gardenActive = true;
+
+        // Ground
+        function drawGround() {
+            const gradient = gctx.createLinearGradient(0, gardenCanvas.height - 50, 0, gardenCanvas.height);
+            gradient.addColorStop(0, '#1a3a1a');
+            gradient.addColorStop(1, '#0d260d');
+            gctx.fillStyle = gradient;
+            gctx.beginPath();
+            gctx.ellipse(gardenCanvas.width / 2, gardenCanvas.height, gardenCanvas.width / 1.5, 50, 0, Math.PI, 0);
+            gctx.fill();
+        }
+
+        function animateGarden() {
+            gctx.clearRect(0, 0, gardenCanvas.width, gardenCanvas.height);
+            drawGround();
+
+            flowers.forEach(f => {
+                f.grow();
+                f.draw(gctx);
+            });
+
+            gardenAnimId = requestAnimationFrame(animateGarden);
+        }
+        animateGarden();
+
+        // Click to plant
+        const scene3 = document.getElementById('scene3');
+        scene3.addEventListener('click', (e) => {
+            if (e.target.id === 'gardenNext') {
+                goToScene(4);
+                gardenActive = false;
+                return;
+            }
+            const rect = gardenCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = gardenCanvas.height - 30;
+            if (flowers.length < 40) {
+                flowers.push(new Flower(x, y));
+                // Sparkle burst at click
+                for (let i = 0; i < 8; i++) {
+                    sparkles.push(new Sparkle(e.clientX, e.clientY));
+                }
+            }
+        });
+    }
+
+    // ============================================================
+    //  FLOWER TYPES — 8 unique styles with varied designs
+    // ============================================================
+    const FLOWER_TYPES = ['rose', 'tulip', 'daisy', 'sunflower', 'lavender', 'cherry_blossom', 'lily', 'wildflower'];
+
+    // Color palettes per type
+    const PALETTES = {
+        rose: {
+            petals: [['#e91e63','#c2185b'], ['#f44336','#d32f2f'], ['#ad1457','#880e4f'], ['#ff5252','#d50000'], ['#ff80ab','#ff4081']],
+            center: '#8e0038',
+            stem: ['#2e7d32','#388e3c'], leaf: '#43a047'
+        },
+        tulip: {
+            petals: [['#e91e63','#f06292'], ['#ff6b9d','#ff80ab'], ['#f9ca24','#f7dc6f'], ['#ab47bc','#ce93d8'], ['#ff7043','#ff8a65'], ['#ef5350','#e57373']],
+            center: null,
+            stem: ['#33691e','#558b2f'], leaf: '#689f38'
+        },
+        daisy: {
+            petals: [['#ffffff','#f5f5f5'], ['#fff9c4','#fff176'], ['#fce4ec','#f8bbd0'], ['#e1f5fe','#b3e5fc']],
+            center: '#f9ca24',
+            stem: ['#558b2f','#689f38'], leaf: '#7cb342'
+        },
+        sunflower: {
+            petals: [['#f9ca24','#f7dc6f'], ['#ffb300','#ffc107'], ['#ff8f00','#ffa000']],
+            center: '#4e342e',
+            stem: ['#33691e','#2e7d32'], leaf: '#558b2f'
+        },
+        lavender: {
+            petals: [['#9c27b0','#ba68c8'], ['#7b1fa2','#ab47bc'], ['#6a1b9a','#8e24aa'], ['#aa00ff','#d500f9']],
+            center: null,
+            stem: ['#558b2f','#689f38'], leaf: '#8bc34a'
+        },
+        cherry_blossom: {
+            petals: [['#ffc0cb','#ffb6c1'], ['#f8bbd0','#f48fb1'], ['#fce4ec','#f8bbd0'], ['#fff0f5','#ffe4e1']],
+            center: '#f9ca24',
+            stem: ['#5d4037','#6d4c41'], leaf: '#a5d6a7'
+        },
+        lily: {
+            petals: [['#ffffff','#f3e5f5'], ['#fce4ec','#f8bbd0'], ['#fff3e0','#ffe0b2'], ['#e8f5e9','#c8e6c9'], ['#f3e5f5','#e1bee7']],
+            center: '#ff6f00',
+            stem: ['#2e7d32','#388e3c'], leaf: '#4caf50'
+        },
+        wildflower: {
+            petals: [['#42a5f5','#64b5f6'], ['#7e57c2','#9575cd'], ['#ef5350','#e57373'], ['#26c6da','#4dd0e1'], ['#66bb6a','#81c784'], ['#ffa726','#ffb74d']],
+            center: '#fff176',
+            stem: ['#689f38','#7cb342'], leaf: '#8bc34a'
+        }
+    };
+
+    class Flower {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.type = FLOWER_TYPES[Math.floor(Math.random() * FLOWER_TYPES.length)];
+            const pal = PALETTES[this.type];
+            const chosenPetals = pal.petals[Math.floor(Math.random() * pal.petals.length)];
+            this.petalColor = chosenPetals[0];
+            this.petalColor2 = chosenPetals[1];
+            this.centerColor = pal.center;
+            this.stemColor = pal.stem[0];
+            this.stemColor2 = pal.stem[1];
+            this.leafColor = pal.leaf;
+
+            // Varied sizing per type
+            switch (this.type) {
+                case 'rose':
+                    this.targetHeight = 90 + Math.random() * 90;
+                    this.petalSize = 10 + Math.random() * 8;
+                    this.stemWidth = 3 + Math.random();
+                    break;
+                case 'tulip':
+                    this.targetHeight = 100 + Math.random() * 80;
+                    this.petalSize = 12 + Math.random() * 8;
+                    this.stemWidth = 3;
+                    break;
+                case 'daisy':
+                    this.targetHeight = 70 + Math.random() * 70;
+                    this.petalSize = 8 + Math.random() * 6;
+                    this.stemWidth = 2;
+                    break;
+                case 'sunflower':
+                    this.targetHeight = 140 + Math.random() * 80;
+                    this.petalSize = 14 + Math.random() * 10;
+                    this.stemWidth = 4 + Math.random();
+                    break;
+                case 'lavender':
+                    this.targetHeight = 100 + Math.random() * 60;
+                    this.petalSize = 4 + Math.random() * 3;
+                    this.stemWidth = 2;
+                    break;
+                case 'cherry_blossom':
+                    this.targetHeight = 50 + Math.random() * 50;
+                    this.petalSize = 9 + Math.random() * 5;
+                    this.stemWidth = 2;
+                    break;
+                case 'lily':
+                    this.targetHeight = 110 + Math.random() * 70;
+                    this.petalSize = 14 + Math.random() * 8;
+                    this.stemWidth = 3;
+                    break;
+                case 'wildflower':
+                    this.targetHeight = 50 + Math.random() * 80;
+                    this.petalSize = 6 + Math.random() * 6;
+                    this.stemWidth = 2;
+                    break;
+            }
+
+            this.currentHeight = 0;
+            this.growSpeed = 0.8 + Math.random() * 1.5;
+            this.bloom = 0;
+            this.swayOffset = Math.random() * Math.PI * 2;
+            this.swaySpeed = 0.008 + Math.random() * 0.015;
+            this.leafCount = 1 + Math.floor(Math.random() * 3);
+            this.leafPositions = [];
+            for (let i = 0; i < this.leafCount; i++) {
+                this.leafPositions.push({
+                    pct: 0.25 + Math.random() * 0.45,
+                    side: Math.random() > 0.5 ? 1 : -1,
+                    size: 8 + Math.random() * 12,
+                    angle: 0.3 + Math.random() * 0.5
+                });
+            }
+            this.stemCurve = (Math.random() - 0.5) * 30;
+        }
+
+        grow() {
+            if (this.currentHeight < this.targetHeight) {
+                this.currentHeight += this.growSpeed;
+            } else if (this.bloom < 1) {
+                this.bloom = Math.min(1, this.bloom + 0.025);
+            }
+        }
+
+        draw(ctx) {
+            const t = Date.now() * 0.001;
+            const sway = Math.sin(t * this.swaySpeed * 6 + this.swayOffset) * (2 + this.targetHeight * 0.01);
+            ctx.save();
+            ctx.translate(this.x, this.y);
+
+            // --- STEM ---
+            const stemGrad = ctx.createLinearGradient(0, 0, 0, -this.currentHeight);
+            stemGrad.addColorStop(0, this.stemColor);
+            stemGrad.addColorStop(1, this.stemColor2);
+            ctx.strokeStyle = stemGrad;
+            ctx.lineWidth = this.stemWidth;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            const cpx = this.stemCurve + sway * 2;
+            const cpy = -this.currentHeight * 0.5;
+            const endX = sway;
+            const endY = -this.currentHeight;
+            ctx.quadraticCurveTo(cpx, cpy, endX, endY);
+            ctx.stroke();
+
+            // --- LEAVES ---
+            if (this.currentHeight > this.targetHeight * 0.35) {
+                this.leafPositions.forEach(lp => {
+                    const ly = -this.currentHeight * lp.pct;
+                    // Get point on curve at this pct
+                    const lpx = (1-lp.pct)*(1-lp.pct)*0 + 2*(1-lp.pct)*lp.pct*cpx + lp.pct*lp.pct*endX;
+                    const leafAngle = lp.side * lp.angle;
+                    const ls = lp.size * Math.min(1, (this.currentHeight / this.targetHeight - 0.3) * 3);
+
+                    ctx.save();
+                    ctx.translate(lpx, ly);
+                    ctx.rotate(leafAngle * lp.side);
+                    ctx.fillStyle = this.leafColor;
+                    ctx.globalAlpha = 0.85;
+
+                    // Leaf shape
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.bezierCurveTo(
+                        lp.side * ls * 0.4, -ls * 0.3,
+                        lp.side * ls, -ls * 0.15,
+                        lp.side * ls * 0.9, ls * 0.05
+                    );
+                    ctx.bezierCurveTo(
+                        lp.side * ls * 0.5, ls * 0.2,
+                        lp.side * ls * 0.15, ls * 0.1,
+                        0, 0
+                    );
+                    ctx.fill();
+
+                    // Leaf vein
+                    ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+                    ctx.lineWidth = 0.5;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(lp.side * ls * 0.6, -ls * 0.05);
+                    ctx.stroke();
+
+                    ctx.globalAlpha = 1;
+                    ctx.restore();
+                });
+            }
+
+            // --- FLOWER HEAD ---
+            if (this.bloom > 0) {
+                const hx = endX;
+                const hy = endY;
+                const s = this.bloom;
+                ctx.save();
+                ctx.translate(hx, hy);
+
+                switch (this.type) {
+                    case 'rose': this.drawRose(ctx, s); break;
+                    case 'tulip': this.drawTulip(ctx, s); break;
+                    case 'daisy': this.drawDaisy(ctx, s); break;
+                    case 'sunflower': this.drawSunflower(ctx, s); break;
+                    case 'lavender': this.drawLavender(ctx, s, this.currentHeight); break;
+                    case 'cherry_blossom': this.drawCherryBlossom(ctx, s); break;
+                    case 'lily': this.drawLily(ctx, s); break;
+                    case 'wildflower': this.drawWildflower(ctx, s); break;
+                }
+
+                ctx.restore();
+            }
+
+            ctx.restore();
+        }
+
+        // --- ROSE: layered spiral petals ---
+        drawRose(ctx, s) {
+            const layers = 4;
+            const ps = this.petalSize * s;
+            for (let layer = layers; layer >= 1; layer--) {
+                const count = 5 + layer;
+                const radius = ps * (layer / layers) * 0.9;
+                const rotOffset = layer * 0.4;
+                for (let i = 0; i < count; i++) {
+                    const angle = (i / count) * Math.PI * 2 + rotOffset;
+                    const px = Math.cos(angle) * radius * 0.6;
+                    const py = Math.sin(angle) * radius * 0.6;
+                    ctx.fillStyle = layer % 2 === 0 ? this.petalColor : this.petalColor2;
+                    ctx.globalAlpha = 0.7 + layer * 0.07;
+                    ctx.beginPath();
+                    ctx.ellipse(px, py, ps * 0.35, ps * 0.22, angle + 0.3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            ctx.globalAlpha = 1;
+            // center curl
+            ctx.fillStyle = this.centerColor;
+            ctx.beginPath();
+            ctx.arc(0, 0, ps * 0.15, 0, Math.PI * 2);
+            ctx.fill();
+            // glow
+            ctx.shadowColor = this.petalColor;
+            ctx.shadowBlur = 12 * s;
+            ctx.fillStyle = 'rgba(255,255,255,0.05)';
+            ctx.beginPath();
+            ctx.arc(0, 0, ps, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        // --- TULIP: cup-shaped petals ---
+        drawTulip(ctx, s) {
+            const ps = this.petalSize * s;
+            const petals = 5;
+            for (let i = 0; i < petals; i++) {
+                const angle = (i / petals) * Math.PI - Math.PI / 2;
+                const spread = 0.6;
+                ctx.save();
+                ctx.rotate(angle * spread);
+                ctx.fillStyle = i % 2 === 0 ? this.petalColor : this.petalColor2;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.bezierCurveTo(-ps * 0.35, -ps * 0.5, -ps * 0.25, -ps * 1.1, 0, -ps * 1.2);
+                ctx.bezierCurveTo(ps * 0.25, -ps * 1.1, ps * 0.35, -ps * 0.5, 0, 0);
+                ctx.fill();
+                ctx.restore();
+            }
+            // glow
+            ctx.shadowColor = this.petalColor;
+            ctx.shadowBlur = 10 * s;
+            ctx.fillStyle = 'rgba(255,255,255,0.05)';
+            ctx.beginPath();
+            ctx.arc(0, -ps * 0.5, ps * 0.6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        // --- DAISY: many thin petals with big center ---
+        drawDaisy(ctx, s) {
+            const ps = this.petalSize * s;
+            const count = 12 + Math.floor(Math.random() * 2 - 1); // keep stable
+            for (let i = 0; i < 13; i++) {
+                const angle = (i / 13) * Math.PI * 2;
+                ctx.save();
+                ctx.rotate(angle);
+                ctx.fillStyle = i % 2 === 0 ? this.petalColor : this.petalColor2;
+                ctx.beginPath();
+                ctx.ellipse(0, -ps * 0.9, ps * 0.2, ps * 0.55, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+            // center
+            ctx.fillStyle = this.centerColor;
+            ctx.beginPath();
+            ctx.arc(0, 0, ps * 0.35, 0, Math.PI * 2);
+            ctx.fill();
+            // center texture dots
+            ctx.fillStyle = 'rgba(0,0,0,0.15)';
+            for (let i = 0; i < 5; i++) {
+                const a = Math.random() * Math.PI * 2;
+                const r = Math.random() * ps * 0.2;
+                ctx.beginPath();
+                ctx.arc(Math.cos(a) * r, Math.sin(a) * r, 1, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            // glow
+            ctx.shadowColor = this.centerColor;
+            ctx.shadowBlur = 8 * s;
+            ctx.fillStyle = 'rgba(255,255,255,0.05)';
+            ctx.beginPath();
+            ctx.arc(0, 0, ps, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        // --- SUNFLOWER: large with dark center ---
+        drawSunflower(ctx, s) {
+            const ps = this.petalSize * s;
+            // Two rows of petals
+            for (let row = 0; row < 2; row++) {
+                const count = row === 0 ? 16 : 12;
+                const pLen = row === 0 ? ps * 1.0 : ps * 0.75;
+                const offset = row * 0.15;
+                for (let i = 0; i < count; i++) {
+                    const angle = (i / count) * Math.PI * 2 + offset;
+                    ctx.save();
+                    ctx.rotate(angle);
+                    ctx.fillStyle = row === 0 ? this.petalColor : this.petalColor2;
+                    ctx.beginPath();
+                    ctx.ellipse(0, -pLen, ps * 0.15, pLen * 0.45, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+            // Dark center
+            const cGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, ps * 0.4);
+            cGrad.addColorStop(0, '#5d4037');
+            cGrad.addColorStop(0.7, this.centerColor);
+            cGrad.addColorStop(1, '#3e2723');
+            ctx.fillStyle = cGrad;
+            ctx.beginPath();
+            ctx.arc(0, 0, ps * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+            // Seed pattern
+            ctx.fillStyle = 'rgba(255,255,255,0.08)';
+            for (let i = 0; i < 12; i++) {
+                const a = (i / 12) * Math.PI * 2;
+                const r = ps * 0.2;
+                ctx.beginPath();
+                ctx.arc(Math.cos(a) * r, Math.sin(a) * r, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            // glow
+            ctx.shadowColor = '#f9ca24';
+            ctx.shadowBlur = 20 * s;
+            ctx.fillStyle = 'rgba(255,255,255,0.04)';
+            ctx.beginPath();
+            ctx.arc(0, 0, ps * 1.2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        // --- LAVENDER: tall cluster of tiny buds ---
+        drawLavender(ctx, s, height) {
+            const budCount = 10 + Math.floor(this.petalSize);
+            const clusterH = height * 0.3 * s;
+            for (let i = 0; i < budCount; i++) {
+                const pct = i / budCount;
+                const by = -pct * clusterH;
+                const bx = (Math.random() - 0.5) * 6;
+                const bs = (2 + Math.random() * 3) * s;
+                ctx.fillStyle = i % 3 === 0 ? this.petalColor : this.petalColor2;
+                ctx.globalAlpha = 0.6 + pct * 0.4;
+                ctx.beginPath();
+                ctx.ellipse(bx, by, bs, bs * 1.3, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+            // Glow
+            ctx.shadowColor = this.petalColor;
+            ctx.shadowBlur = 10 * s;
+            ctx.fillStyle = 'rgba(255,255,255,0.03)';
+            ctx.beginPath();
+            ctx.ellipse(0, -clusterH * 0.5, 10, clusterH * 0.6, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        // --- CHERRY BLOSSOM: 5 delicate rounded petals with notch ---
+        drawCherryBlossom(ctx, s) {
+            const ps = this.petalSize * s;
+            for (let i = 0; i < 5; i++) {
+                const angle = (i / 5) * Math.PI * 2 - Math.PI / 2;
+                ctx.save();
+                ctx.rotate(angle);
+                ctx.fillStyle = i % 2 === 0 ? this.petalColor : this.petalColor2;
+                ctx.beginPath();
+                // Heart-ish petal
+                ctx.moveTo(0, 0);
+                ctx.bezierCurveTo(-ps * 0.4, -ps * 0.4, -ps * 0.45, -ps * 0.9, 0, -ps * 0.75);
+                ctx.bezierCurveTo(ps * 0.45, -ps * 0.9, ps * 0.4, -ps * 0.4, 0, 0);
+                ctx.fill();
+                ctx.restore();
+            }
+            // Center
+            ctx.fillStyle = this.centerColor;
+            ctx.beginPath();
+            ctx.arc(0, 0, ps * 0.15, 0, Math.PI * 2);
+            ctx.fill();
+            // Stamens
+            ctx.strokeStyle = '#ffab00';
+            ctx.lineWidth = 0.8;
+            for (let i = 0; i < 6; i++) {
+                const a = (i / 6) * Math.PI * 2;
+                const len = ps * 0.3;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(Math.cos(a) * len, Math.sin(a) * len);
+                ctx.stroke();
+                ctx.fillStyle = '#ff6f00';
+                ctx.beginPath();
+                ctx.arc(Math.cos(a) * len, Math.sin(a) * len, 1.2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            // Glow
+            ctx.shadowColor = this.petalColor;
+            ctx.shadowBlur = 12 * s;
+            ctx.fillStyle = 'rgba(255,255,255,0.05)';
+            ctx.beginPath();
+            ctx.arc(0, 0, ps, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        // --- LILY: large elegant curved petals ---
+        drawLily(ctx, s) {
+            const ps = this.petalSize * s;
+            for (let i = 0; i < 6; i++) {
+                const angle = (i / 6) * Math.PI * 2;
+                ctx.save();
+                ctx.rotate(angle);
+                ctx.fillStyle = i % 2 === 0 ? this.petalColor : this.petalColor2;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.bezierCurveTo(-ps * 0.25, -ps * 0.3, -ps * 0.55, -ps * 1.0, 0, -ps * 1.3);
+                ctx.bezierCurveTo(ps * 0.55, -ps * 1.0, ps * 0.25, -ps * 0.3, 0, 0);
+                ctx.fill();
+                // Petal stripe detail
+                ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+                ctx.lineWidth = 0.6;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.bezierCurveTo(0, -ps * 0.4, 0, -ps * 0.8, 0, -ps * 1.2);
+                ctx.stroke();
+                ctx.restore();
+            }
+            // Center
+            ctx.fillStyle = this.centerColor;
+            ctx.beginPath();
+            ctx.arc(0, 0, ps * 0.18, 0, Math.PI * 2);
+            ctx.fill();
+            // Long stamens
+            ctx.strokeStyle = '#d84315';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 5; i++) {
+                const a = (i / 5) * Math.PI * 2 + 0.3;
+                const len = ps * 0.55;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(Math.cos(a) * len, Math.sin(a) * len);
+                ctx.stroke();
+                ctx.fillStyle = '#bf360c';
+                ctx.beginPath();
+                ctx.arc(Math.cos(a) * len, Math.sin(a) * len, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            // Glow
+            ctx.shadowColor = this.petalColor;
+            ctx.shadowBlur = 15 * s;
+            ctx.fillStyle = 'rgba(255,255,255,0.04)';
+            ctx.beginPath();
+            ctx.arc(0, 0, ps * 1.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        // --- WILDFLOWER: cluster of tiny round petals ---
+        drawWildflower(ctx, s) {
+            const ps = this.petalSize * s;
+            const count = 7 + Math.floor(Math.random() * 2 - 1);
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                const dist = ps * 0.55;
+                const px = Math.cos(angle) * dist;
+                const py = Math.sin(angle) * dist;
+                ctx.fillStyle = i % 2 === 0 ? this.petalColor : this.petalColor2;
+                ctx.beginPath();
+                ctx.arc(px, py, ps * 0.3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            // Extra inner ring
+            for (let i = 0; i < 5; i++) {
+                const angle = (i / 5) * Math.PI * 2 + 0.3;
+                const dist = ps * 0.25;
+                ctx.fillStyle = this.petalColor2;
+                ctx.globalAlpha = 0.7;
+                ctx.beginPath();
+                ctx.arc(Math.cos(angle) * dist, Math.sin(angle) * dist, ps * 0.2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+            // Center
+            ctx.fillStyle = this.centerColor;
+            ctx.beginPath();
+            ctx.arc(0, 0, ps * 0.2, 0, Math.PI * 2);
+            ctx.fill();
+            // Glow
+            ctx.shadowColor = this.petalColor;
+            ctx.shadowBlur = 10 * s;
+            ctx.fillStyle = 'rgba(255,255,255,0.05)';
+            ctx.beginPath();
+            ctx.arc(0, 0, ps * 0.8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+    }
+
+    // ============================================================
+    //  SCENE 4: THE QUESTION
+    // ============================================================
+    function revealQuestion() {
+        setTimeout(() => document.getElementById('questionMain').classList.add('show'), 300);
+        setTimeout(() => document.getElementById('questionPlea').classList.add('show'), 300);
+        setTimeout(() => document.getElementById('btnRow').classList.add('show'), 300);
+    }
+
+    // YES button
+    document.getElementById('btnYes').addEventListener('click', () => {
+        yesAnswer = true;
+        goToScene(5);
+    });
+
+    // NO button - "too bad you're gonna be it anyway"
+    let yesAnswer = false;
+
+    document.getElementById('btnNo').addEventListener('click', () => {
+        yesAnswer = false;
+        goToScene(5);
+    });
+
+    // ============================================================
+    //  SCENE 5: FINALE
+    // ============================================================
+    function revealFinale() {
+        const text = document.getElementById('finaleText');
+        const sub = document.getElementById('finaleSub');
+        const hearts = document.getElementById('finaleHearts');
+
+        if (yesAnswer) {
+            text.innerHTML = "Yaaay!";
+            sub.textContent = "You just made me the happiest person ever!";
+        } else {
+            text.innerHTML = "Too Bad!";
+            sub.textContent = "You're gonna be my Valentine anyway!";
+        }
+
+        setTimeout(() => text.classList.add('show'), 200);
+        setTimeout(() => sub.classList.add('show'), 200);
+        setTimeout(() => hearts.classList.add('show'), 200);
+
+        // Launch confetti
+        launchConfetti();
+        setTimeout(launchConfetti, 1500);
+        setTimeout(launchConfetti, 3000);
+        setTimeout(launchConfetti, 5000);
+    }
+
+    function launchConfetti() {
+        const colors = [
+            '#ff6b9d', '#f9ca24', '#e91e63', '#f48fb1',
+            '#ff69b4', '#ffc0cb', '#ff85ab', '#f06292',
+            '#ec407a', '#fff', '#ffd700'
+        ];
+        for (let i = 0; i < 100; i++) {
+            setTimeout(() => {
+                const c = document.createElement('div');
+                c.className = 'confetti';
+                c.style.left = Math.random() * 100 + '%';
+                c.style.background = colors[Math.floor(Math.random() * colors.length)];
+                c.style.width = (5 + Math.random() * 10) + 'px';
+                c.style.height = (5 + Math.random() * 18) + 'px';
+                c.style.animationDuration = (2 + Math.random() * 3) + 's';
+                c.style.animationDelay = '0s';
+                c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                document.body.appendChild(c);
+                setTimeout(() => c.remove(), 6000);
+            }, Math.random() * 600);
+        }
+    }
+
+    // ============================================================
+    //  Handle window resize for garden
+    // ============================================================
+    window.addEventListener('resize', () => {
+        resizeCanvas();
+        if (gardenActive) {
+            gardenCanvas.width = window.innerWidth;
+            gardenCanvas.height = window.innerHeight * 0.7;
+        }
+    });
+    </script>
+</body>
+</html>
